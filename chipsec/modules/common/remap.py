@@ -34,6 +34,8 @@ Example:
 Registers used:
     - PCI0.0.0_REMAPBASE
     - PCI0.0.0_REMAPLIMIT
+    - PCI0.0.0_REMAPBASEMC1
+    - PCI0.0.0_REMAPLIMITMC1
     - PCI0.0.0_TOUUD
     - PCI0.0.0_TOLUD
     - PCI0.0.0_TSEGMB
@@ -46,6 +48,7 @@ Registers used:
 from chipsec.module_common import BaseModule, MTAG_HWCONFIG, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT32, ALIGNED_1MB
+from typing import Optional, Tuple
 
 _MODULE_NAME = 'remap'
 
@@ -86,12 +89,30 @@ class remap(BaseModule):
         else:
             self.logger.log_verbose('IBECC is not defined!')
         return False
+    
+    def get_remap_registers(self) -> Tuple[int, int]:
+        base = self.cs.register.read('PCI0.0.0_REMAPBASE')
+        limit = self.cs.register.read('PCI0.0.0_REMAPLIMIT')
+        return (base, limit)
 
+    def get_mc_registers(self) -> Tuple[Optional[int], Optional[int]]:
+        if self.cs.register.is_defined('PCI0.0.0_REMAPBASEMC1') and self.cs.register.is_defined('PCI0.0.0_REMAPLIMITMC1'):
+            base = self.cs.register.read('PCI0.0.0_REMAPBASEMC1')
+            limit = self.cs.register.read('PCI0.0.0_REMAPLIMITMC1')
+            return (base, limit)
+        return (None, None)
+    
     def check_remap_config(self) -> int:
         is_warning = False
 
-        remapbase = self.cs.register.read('PCI0.0.0_REMAPBASE')
-        remaplimit = self.cs.register.read('PCI0.0.0_REMAPLIMIT')
+        remapbase, remaplimit = self.get_remap_registers()
+        remapbasemc1, remaplimitmc1 = self.get_mc_registers()
+
+        if self.cs.register.is_all_ffs('PCI0.0.0_REMAPBASE', remapbase) or self.cs.register.is_all_ffs('PCI0.0.0_REMAPLIMIT', remaplimit):
+            if remapbasemc1 is not None and remaplimitmc1 is not None:
+                remapbase = remapbasemc1
+                remaplimit = remaplimitmc1
+        
         touud = self.cs.register.read('PCI0.0.0_TOUUD')
         tolud = self.cs.register.read('PCI0.0.0_TOLUD')
         tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB')
