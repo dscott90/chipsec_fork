@@ -20,14 +20,14 @@ override_dh_auto_build:
 	#set -ex; for python in $(PYTHON2_VERSIONS); do \
         #        $$python setup.py build --skip-driver; \
         #done
-	python setup.py build --skip-driver;
+	CHIPSEC_SKIP_DRIVER=1 python -m pip install --no-build-isolation .;
 
 override_dh_auto_install:
 	#dh_auto_install
 	#set -ex; for python in $(PYTHON3_VERSIONS); do \
 	#	$$python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb; \
 	#done
-	python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb;
+	CHIPSEC_SKIP_DRIVER=1 python -m pip install --no-build-isolation . --root=$(CURDIR)/debian/$(DEB_SOURCE) --prefix=/usr;
 	install -d debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(DEB_VERSION_UPSTREAM)
 	cp -r drivers/linux/* debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(DEB_VERSION_UPSTREAM)
 

@@ -128,7 +128,7 @@ class build_ext(_build_ext):
         elif platform.system().lower() == 'windows':
             driver_build_function = self._build_all_win_drivers
 
-        if not self.skip_driver:
+        if not self.skip_driver and not os.environ.get('CHIPSEC_SKIP_DRIVER'):
             driver_build_function()
 
     def get_source_files(self):
@@ -150,7 +150,7 @@ class install(_install):
         # This marker is only created by an sdist command when
         # 'python setup.py sdist' is executed. This allows having
         # driver-less PIP packages uploaded to PyPi.
-        if os.path.exists(NO_DRIVER_MARKER_FILE):
+        if os.path.exists(NO_DRIVER_MARKER_FILE) or os.environ.get('CHIPSEC_SKIP_DRIVER'):
             self.skip_driver = True
 
 
@@ -161,6 +161,8 @@ class build(_build):
     def initialize_options(self):
         _build.initialize_options(self)
         self.skip_driver = None
+        if os.environ.get('CHIPSEC_SKIP_DRIVER'):
+            self.skip_driver = True
 
 
 class sdist(_sdist):

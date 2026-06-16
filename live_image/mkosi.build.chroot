@@ -9,7 +9,7 @@ cd ${SRCDIR}/chipsec
 KSRC=$(find /lib/modules -maxdepth 2 -name build)
 export KSRC
 
-python3 setup.py build build_ext install --root $DESTDIR/
+python3 -m pip install --no-build-isolation . --root $DESTDIR/
 
 # Install UEFI version as well
 mkdir -p ${DESTDIR}/efi
