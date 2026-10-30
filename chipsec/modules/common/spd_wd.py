@@ -69,14 +69,16 @@ class spd_wd(BaseModule):
 
     def is_supported(self) -> bool:
         if self.cs.device.is_defined('SMBUS'):
-            smbdev = self.cs.device.get_list_by_name('SMBUS')[0]
-            if smbdev.get_enabled_instances():
-                if self.cs.register.has_field('HCFG', 'SPD_WD'):
+            # get_list_by_name() only returns enabled devices, so it can be empty even
+            # when the device is defined (e.g. SMBUS hidden or DID not matched on PCI).
+            smbdevs = self.cs.device.get_list_by_name('SMBUS')
+            if any(dev.get_enabled_instances() for dev in smbdevs):
+                if self.cs.register.has_field('HCFG', 'SPD_WD') and self.cs.register.get_list_by_name('HCFG'):
                     return True
                 else:
                     self.logger.log_important('HCFG.SPD_WD is not defined for this platform. Skipping module.')
             else:
-                self.logger.log_important('SMBUS device appears disabled. Skipping module.')
+                self.logger.log_important('SMBUS device appears disabled or was not enumerated on PCI. Skipping module.')
         else:
             self.logger.log_important('SMBUS device not defined. Skipping module.')
         return False
